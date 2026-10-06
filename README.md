@@ -67,5 +67,5 @@ No build tools or NPM dependencies required!
 ## 🏫 Project Details
 
 * **Institution**: Department of Computer Science and Engineering, Priyadarshini College of Engineering, Nagpur.
-* **Team**: Saloni Singh, Khushi Karemore, Riddhi Sarosiya, Sanchita Moundekar, Adhitya Anil, Ankitkumar Ray.
+* **Team**: Sanchita Moundekar, Khushi Karemore, Riddhi Sarosiya, Adhitya Anil and Saloni Singh.
 * **License**: MIT
