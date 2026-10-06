@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AccessAll — Making the Web Accessible for Everyone</title>
+<meta name="description" content="AccessAll is an all-in-one browser accessibility platform featuring full webpage translation, screen reader text-to-speech, speech-to-text, photo recognition, font scaling, and high contrast themes." />
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --ink: #0A2540;
+    --ink-light: #425466;
+    --blue: #1B6FA8;
+    --blue-deep: #123A5C;
+    --teal: #17A398;
+    --teal-glow: rgba(23, 163, 152, 0.25);
+    --bg: #F6FAFB;
+    --white: #FFFFFF;
+    --amber: #FFC857;
+    --rose: #E23E3E;
+    --line: rgba(10, 37, 64, 0.12);
+    --shadow: 0 12px 35px rgba(10, 37, 64, 0.08);
+    --shadow-lg: 0 20px 45px rgba(10, 37, 64, 0.15);
+    --radius: 20px;
+    --scale: 1;
+    --font-body: 'Atkinson Hyperlegible', system-ui, -apple-system, sans-serif;
+    --font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; font-size: calc(16px * var(--scale)); }
+  @media (prefers-reduced-motion: reduce){
+    html { scroll-behavior: auto; }
+    * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-body);
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.6;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  /* ---------- High Contrast Mode ---------- */
+  body.contrast {
+    --ink: #FFFFFF;
+    --ink-light: #E0E0E0;
+    --bg: #000000;
+    --white: #0E0E0E;
+    --line: rgba(255, 255, 255, 0.4);
+    --shadow: none;
+    --shadow-lg: none;
+    --blue: #FFC857;
+    --teal: #FFC857;
+  }
+  body.contrast .glass { background: #0E0E0E; border: 2px solid var(--amber); backdrop-filter: none; }
+  body.contrast .btn-primary { background: var(--amber); color: #000000; border-color: var(--amber); font-weight: 800; }
+  body.contrast a, body.contrast .icon-badge, body.contrast .learn-more { color: var(--amber) !important; }
+  body.contrast .hero { background: #000000; }
+  body.contrast .section-alt { background: #0E0E0E; }
+  body.contrast .toolbar { background: #000000; border-bottom: 2px solid var(--amber); }
+  body.contrast .speech-floating-bar { background: #0E0E0E; border: 2px solid var(--amber); }
+
+  a { color: var(--blue); text-decoration-thickness: 2px; }
+  h1, h2, h3, h4 { font-family: var(--font-display); margin: 0 0 0.5em 0; letter-spacing: -0.01em; line-height: 1.2; }
+  p { margin: 0 0 1em 0; }
+  img { max-width: 100%; display: block; }
+  button, select, input, textarea { font-family: inherit; }
+
+  /* Accessibility focus indicator */
+  :focus-visible {
+    outline: 3px solid var(--amber) !important;
+    outline-offset: 3px !important;
+    border-radius: 6px;
+  }
+
+  .skip-link {
+    position: absolute; left: -999px; top: 0; background: var(--ink); color: var(--white);
+    padding: 12px 20px; z-index: 10000; border-radius: 0 0 12px 0; font-weight: 700;
+    transition: left 0.2s ease;
+  }
+  .skip-link:focus { left: 0; }
+
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar {
+    position: sticky; top: 0; z-index: 990;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 4px 20px rgba(10,37,64,0.04);
+  }
+  .toolbar-inner {
+    max-width: 1200px; margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--font-display); font-weight: 700; font-size: 1.25rem;
+    color: var(--ink); text-decoration: none;
+  }
+  .brand-mark {
+    width: 38px; height: 38px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--blue), var(--teal));
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 800; font-size: 1.2rem;
+    box-shadow: 0 4px 12px rgba(23,163,152,0.3);
+  }
+  nav.primary-nav { display: flex; gap: 20px; flex-wrap: wrap; }
+  nav.primary-nav a {
+    color: var(--ink); text-decoration: none; font-size: 0.98rem; font-weight: 600; opacity: 0.85;
+    transition: opacity 0.2s, color 0.2s;
+  }
+  nav.primary-nav a:hover, nav.primary-nav a:focus { opacity: 1; color: var(--blue); }
+
+  .a11y-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .a11y-btn {
+    border: 1px solid var(--line); background: var(--white); color: var(--ink);
+    border-radius: 10px; padding: 8px 14px; cursor: pointer; font-weight: 700; font-size: 0.88rem;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.2s;
+  }
+  .a11y-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow); background: var(--white); }
+  .a11y-btn[aria-pressed="true"] { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+  /* Toolbar specific highlight for actions */
+  .a11y-btn-active {
+    background: linear-gradient(90deg, var(--blue), var(--teal)) !important;
+    color: #FFFFFF !important; border: none !important;
+  }
+
+  .lang-select-wrapper { display: inline-flex; align-items: center; gap: 6px; }
+  .lang-select {
+    padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--white); color: var(--ink); font-weight: 700; font-size: 0.88rem;
+    cursor: pointer; outline: none; transition: border-color 0.2s;
+  }
+  .lang-select:hover, .lang-select:focus { border-color: var(--blue); }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    position: relative; overflow: hidden;
+    min-height: 88vh;
+    display: flex; align-items: center;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(23,163,152,0.18), transparent 60%),
+      radial-gradient(900px 500px at 90% 10%, rgba(27,111,168,0.22), transparent 60%),
+      linear-gradient(180deg, #EAF4F8 0%, #F6FAFB 60%);
+  }
+  .hero-grid {
+    display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 48px; align-items: center;
+    padding: 80px 0 60px;
+  }
+  @media (max-width: 900px){ .hero-grid { grid-template-columns: 1fr; padding-top: 40px; } }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(23,163,152,0.12); color: var(--teal);
+    padding: 6px 16px; border-radius: 999px; font-weight: 700; font-size: 0.82rem;
+    letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 18px;
+  }
+  body.contrast .eyebrow { background: transparent; border: 2px solid var(--amber); color: var(--amber); }
+
+  .hero h1 { font-size: clamp(2.8rem, 5.5vw, 4.4rem); color: var(--ink); line-height: 1.05; }
+  .hero h1 span {
+    background: linear-gradient(90deg, var(--blue), var(--teal));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  body.contrast .hero h1 span { color: var(--amber); -webkit-background-clip: initial; background-clip: initial; background: none; }
+  .hero p.lead { font-size: 1.18rem; max-width: 52ch; color: var(--ink-light); }
+
+  .btn-row { display: flex; gap: 14px; margin-top: 28px; flex-wrap: wrap; }
+  .btn {
+    padding: 14px 28px; border-radius: 14px; font-weight: 700; font-size: 1rem;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+    border: 1px solid transparent; transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.2s;
+  }
+  .btn:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+  .btn-primary { background: linear-gradient(90deg, var(--blue), var(--teal)); color: #fff; }
+  .btn-ghost { background: var(--white); color: var(--ink); border-color: var(--line); }
+  .btn-accent { background: #0A2540; color: #FFFFFF; }
+  body.contrast .btn-accent { background: var(--amber); color: #000; }
+
+  .hero-visual { position: relative; height: 420px; }
+  .orb {
+    position: absolute; border-radius: 40% 60% 60% 40% / 50% 40% 60% 50%;
+    background: linear-gradient(135deg, rgba(27,111,168,0.22), rgba(23,163,152,0.22));
+    filter: blur(2px);
+    animation: float 7s ease-in-out infinite;
+  }
+  .orb.o1 { width: 290px; height: 290px; top: 10px; left: 20px; }
+  .orb.o2 { width: 190px; height: 190px; bottom: 10px; right: 10px; animation-delay: -2.5s; }
+
+  .floaty {
+    position: absolute; background: var(--white); border: 1px solid var(--line);
+    box-shadow: var(--shadow); border-radius: 16px; padding: 10px 16px;
+    display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 0.88rem;
+    animation: float 6s ease-in-out infinite; backdrop-filter: blur(8px);
+  }
+  .floaty svg { width: 22px; height: 22px; flex-shrink: 0; }
+  .f1 { top: 4%; left: 6%; animation-delay: 0s; }
+  .f2 { top: 28%; right: 2%; animation-delay: -1.2s; }
+  .f3 { bottom: 24%; left: 0%; animation-delay: -2.4s; }
+  .f4 { bottom: 2%; right: 18%; animation-delay: -3.6s; }
+  .f5 { top: 55%; left: 36%; animation-delay: -4.8s; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-14px); }
+  }
+
+  /* ---------- Sections ---------- */
+  section { padding: 90px 0; }
+  .section-alt { background: var(--white); }
+  .section-head { max-width: 680px; margin: 0 auto 52px; text-align: center; }
+  .section-head .eyebrow { margin-left: auto; margin-right: auto; }
+  .section-head h2 { font-size: clamp(2rem, 3.4vw, 2.8rem); }
+  .section-head p { opacity: 0.82; font-size: 1.05rem; }
+
+  .glass {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* Reading highlight style */
+  .speech-reading-highlight {
+    background-color: rgba(255, 200, 87, 0.45) !important;
+    border-radius: 4px;
+    box-shadow: 0 0 0 3px rgba(255, 200, 87, 0.45);
+    transition: background-color 0.3s ease;
+  }
+  body.contrast .speech-reading-highlight {
+    background-color: #FFC857 !important;
+    color: #000000 !important;
+  }
+
+  /* About Grid */
+  .about-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  @media (max-width: 800px){ .about-grid { grid-template-columns: 1fr; } }
+  .about-card { padding: 36px 28px; text-align: center; transition: transform 0.25s ease, box-shadow 0.25s ease; }
+  .about-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+  .icon-badge {
+    width: 60px; height: 60px; border-radius: 18px; margin: 0 auto 18px;
+    background: linear-gradient(135deg, var(--blue), var(--teal));
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 16px rgba(23,163,152,0.25);
+  }
+  .icon-badge svg { width: 30px; height: 30px; }
+
+  /* Features Grid */
+  .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  @media (max-width: 960px){ .features-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 640px){ .features-grid { grid-template-columns: 1fr; } }
+  .feature-card { padding: 32px; transition: transform 0.25s ease, box-shadow 0.25s ease; position: relative; }
+  .feature-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-lg); }
+  .feature-card h3 { font-size: 1.25rem; }
+  .feature-card p { opacity: 0.82; font-size: 0.98rem; }
+  .feature-card-actions { margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .learn-more { font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+
+  /* Feature Card Featured Highlight */
+  .feature-card.highlighted {
+    border: 2px solid var(--teal);
+    background: rgba(23, 163, 152, 0.03);
+  }
+  body.contrast .feature-card.highlighted {
+    border: 2px solid var(--amber);
+  }
+
+  /* Demo Panel */
+  .demo-panel { padding: 36px; display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 36px; }
+  @media (max-width: 900px){ .demo-panel { grid-template-columns: 1fr; } }
+  .demo-panel textarea {
+    width: 100%; min-height: 130px; border-radius: 14px; border: 1px solid var(--line);
+    padding: 16px; font-family: inherit; font-size: 1rem; resize: vertical; background: var(--bg); color: var(--ink);
+  }
+  .demo-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+  .demo-status { margin-top: 12px; font-size: 0.92rem; opacity: 0.85; min-height: 1.2em; font-weight: 600; }
+  .demo-side { display: flex; flex-direction: column; gap: 18px; }
+  .mini-card { padding: 20px; }
+  .mini-card h4 { font-size: 1.05rem; margin-bottom: 6px; }
+  .mini-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  #listenBtn.is-listening { background: linear-gradient(90deg, #E23E3E, #F26B4A); color: #fff; }
+  #listenBtn.is-listening #micIcon { animation: mic-pulse 1.1s ease-in-out infinite; }
+  @keyframes mic-pulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
+    50% { transform: scale(1.25); filter: drop-shadow(0 0 6px rgba(255,255,255,0.85)); }
+  }
+
+  /* Webpage Voice Player Bar (Floating) */
+  .speech-floating-bar {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    background: rgba(10, 37, 64, 0.94); color: #FFFFFF;
+    backdrop-filter: blur(14px);
+    border-radius: 20px; padding: 14px 22px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.3);
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    transform: translateY(120px); opacity: 0; pointer-events: none;
+    transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+  }
+  .speech-floating-bar.active {
+    transform: translateY(0); opacity: 1; pointer-events: auto;
+  }
+  .speech-bar-text { font-size: 0.9rem; font-weight: 700; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .speech-bar-btn {
+    background: rgba(255,255,255,0.15); border: none; color: #fff;
+    padding: 8px 12px; border-radius: 10px; font-weight: 700; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem;
+    transition: background 0.2s;
+  }
+  .speech-bar-btn:hover { background: rgba(255,255,255,0.3); }
+  .speech-bar-btn.stop-btn { background: var(--rose); }
+
+  /* Stats Grid */
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  @media (max-width: 800px){ .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 500px){ .stats-grid { grid-template-columns: 1fr; } }
+  .stat-card { padding: 28px; text-align: center; }
+  .stat-card strong { display: block; font-family: var(--font-display); font-size: 1.4rem; color: var(--blue); margin-bottom: 4px; }
+  body.contrast .stat-card strong { color: var(--amber); }
+
+  /* Timeline */
+  .timeline { position: relative; margin: 0 auto; max-width: 780px; }
+  .timeline::before {
+    content: ""; position: absolute; left: 22px; top: 0; bottom: 0; width: 2px; background: var(--line);
+  }
+  .t-item { position: relative; padding: 0 0 36px 64px; }
+  .t-item:last-child { padding-bottom: 0; }
+  .t-num {
+    position: absolute; left: 0; top: 0; width: 44px; height: 44px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue), var(--teal)); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: var(--font-display);
+    box-shadow: 0 4px 10px rgba(23,163,152,0.3);
+  }
+  .t-item h3 { font-size: 1.1rem; margin-bottom: 4px; }
+  .t-item p { opacity: 0.8; margin: 0; font-size: 0.96rem; }
+
+  /* Testimonials */
+  .test-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  @media (max-width: 800px){ .test-grid { grid-template-columns: 1fr; } }
+  .test-card { padding: 30px; }
+  .test-card p { font-style: italic; opacity: 0.88; }
+  .test-name { font-weight: 700; font-style: normal; margin-top: 14px; font-size: 0.92rem; color: var(--teal); }
+  body.contrast .test-name { color: var(--amber); }
+
+  /* FAQ */
+  .faq { max-width: 780px; margin: 0 auto; }
+  details { border: 1px solid var(--line); border-radius: 16px; padding: 18px 22px; margin-bottom: 14px; background: var(--white); }
+  summary { cursor: pointer; font-weight: 700; list-style: none; display: flex; justify-content: space-between; align-items: center; font-size: 1.05rem; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; font-size: 1.4rem; color: var(--blue); transition: transform 0.2s; }
+  details[open] summary::after { content: "–"; transform: rotate(180deg); }
+  details p { margin-top: 14px; opacity: 0.85; font-size: 0.98rem; }
+
+  /* Team */
+  .team-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  @media (max-width: 800px){ .team-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 500px){ .team-grid { grid-template-columns: 1fr; } }
+  .team-card { padding: 26px; text-align: center; transition: transform 0.2s ease; }
+  .team-card:hover { transform: translateY(-6px); }
+  .avatar {
+    width: 68px; height: 68px; border-radius: 50%; margin: 0 auto 14px;
+    background: linear-gradient(135deg, var(--blue), var(--teal)); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: var(--font-display); font-size: 1.2rem;
+    box-shadow: 0 6px 14px rgba(23,163,152,0.25);
+  }
+  .team-card h4 { font-size: 1.05rem; margin-bottom: 2px; }
+  .team-card span { font-size: 0.85rem; opacity: 0.7; font-weight: 600; }
+
+  /* Contact */
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+  @media (max-width: 900px){ .contact-grid { grid-template-columns: 1fr; } }
+  .contact-info { display: flex; flex-direction: column; gap: 14px; }
+  .contact-row { display: flex; align-items: center; gap: 12px; padding: 18px; font-weight: 600; }
+  form.feedback { padding: 30px; display: flex; flex-direction: column; gap: 16px; }
+  form.feedback input, form.feedback textarea {
+    width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px;
+    font-family: inherit; font-size: 0.98rem; background: var(--bg); color: var(--ink);
+  }
+  form.feedback textarea { min-height: 120px; resize: vertical; }
+  .map-placeholder {
+    margin-top: 16px; height: 190px; border-radius: 16px;
+    background: repeating-linear-gradient(45deg, rgba(27,111,168,0.08), rgba(27,111,168,0.08) 10px, rgba(23,163,152,0.08) 10px, rgba(23,163,152,0.08) 20px);
+    display: flex; align-items: center; justify-content: center; font-weight: 700; opacity: 0.7; border: 1px dashed var(--line);
+  }
+
+  footer { background: var(--ink); color: #fff; padding: 52px 0 32px; }
+  body.contrast footer { background: #000; border-top: 2px solid var(--amber); }
+  .footer-inner { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 24px; }
+  footer .brand { color: #fff; }
+  footer p { opacity: 0.75; font-size: 0.92rem; }
+  .footer-bottom { margin-top: 36px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.15); font-size: 0.85rem; opacity: 0.65; text-align: center; }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+
+  /* Translation status banner */
+  .trans-status-banner {
+    background: linear-gradient(90deg, var(--blue), var(--teal));
+    color: #FFFFFF; font-weight: 700; font-size: 0.88rem; padding: 6px 16px; text-align: center;
+    display: none; align-items: center; justify-content: center; gap: 10px;
+  }
+  body.contrast .trans-status-banner { background: var(--amber); color: #000; }
+  .trans-status-banner.visible { display: flex; }
+  .trans-reset-link { color: #FFF; text-decoration: underline; cursor: pointer; font-weight: 800; margin-left: 8px; }
+  body.contrast .trans-reset-link { color: #000; }
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to main content</a>
+
+<!-- Translation Notification Banner -->
+<div class="trans-status-banner" id="transBanner" role="status" aria-live="polite">
+  <span id="transBannerText">Translating webpage...</span>
+  <button type="button" class="trans-reset-link" id="resetTransBtn" style="background:none; border:none; padding:0;">Reset to Original (English)</button>
+</div>
+
+<header class="toolbar">
+  <div class="toolbar-inner">
+    <a href="#top" class="brand">
+      <span class="brand-mark">A</span> AccessAll
+    </a>
+    <nav class="primary-nav" aria-label="Primary navigation">
+      <a href="#about">About</a>
+      <a href="#features">Features</a>
+      <a href="#demo">Demo</a>
+      <a href="#team">Team</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <div class="a11y-controls" role="group" aria-label="Accessibility & language controls">
+      <!-- Main Webpage Text to Speech Trigger in Header -->
+      <button class="a11y-btn a11y-btn-active" id="readWebpageBtn" aria-label="Read full webpage out loud">
+        🔊 Read Webpage
+      </button>
+
+      <!-- Multilingual Language Selector -->
+      <div class="lang-select-wrapper" title="Select webpage language">
+        <label for="globalLangSelect" class="sr-only">Choose Language</label>
+        <select id="globalLangSelect" class="lang-select" aria-label="Select webpage language and voice">
+          <option value="en-US">🌐 English</option>
+          <option value="hi-IN">🇮🇳 हिन्दी (Hindi)</option>
+          <option value="mr-IN">🇮🇳 मराठी (Marathi)</option>
+          <option value="bn-IN">🇮🇳 বাংলা (Bengali)</option>
+          <option value="ta-IN">🇮🇳 தமிழ் (Tamil)</option>
+          <option value="te-IN">🇮🇳 తెలుగు (Telugu)</option>
+          <option value="gu-IN">🇮🇳 ગુજરાતી (Gujarati)</option>
+          <option value="kn-IN">🇮🇳 ಕನ್ನಡ (Kannada)</option>
+          <option value="ml-IN">🇮🇳 മലയാളം (Malayalam)</option>
+          <option value="pa-IN">🇮🇳 ਪੰਜਾਬੀ (Punjabi)</option>
+          <option value="ur-PK">🇵🇰 اردو (Urdu)</option>
+          <option value="es-ES">🇪🇸 Español</option>
+          <option value="fr-FR">🇫🇷 Français</option>
+          <option value="de-DE">🇩🇪 Deutsch</option>
+          <option value="ar-SA">🇸🇦 العربية (Arabic)</option>
+          <option value="ja-JP">🇯🇵 日本語 (Japanese)</option>
+          <option value="zh-CN">🇨🇳 中文 (Chinese)</option>
+        </select>
+      </div>
+
+      <button class="a11y-btn" id="fontDec" aria-label="Decrease font size">A−</button>
+      <button class="a11y-btn" id="fontReset" aria-label="Reset font size">A</button>
+      <button class="a11y-btn" id="fontInc" aria-label="Increase font size">A+</button>
+      <button class="a11y-btn" id="contrastToggle" aria-pressed="false" aria-label="Toggle high contrast mode">◐ Contrast</button>
+    </div>
+  </div>
+</header>
+
+<!-- Floating Reader Controls for Webpage Speech -->
+<div class="speech-floating-bar" id="speechFloatingBar" role="region" aria-label="Webpage audio reader controls">
+  <div class="speech-bar-text" id="speechBarStatus">Reading Webpage…</div>
+  <button class="speech-bar-btn" id="speechPauseBtn">⏸ Pause</button>
+  <button class="speech-bar-btn" id="speechResumeBtn" style="display:none;">▶ Resume</button>
+  <button class="speech-bar-btn stop-btn" id="speechStopBtn">⏹ Stop Reading</button>
+</div>
+
+<main id="main">
+
+  <!-- HERO -->
+  <section class="hero" id="top">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow">Free · Browser-based · Multilingual · No install</span>
+        <h1>Access<span>All</span></h1>
+        <h1 style="font-size: clamp(1.3rem, 2.4vw, 1.8rem); color: var(--blue); margin-top:-8px;">Making the Web Accessible for Everyone</h1>
+        <p class="lead">AccessAll is an open accessibility platform that reads any webpage aloud in multiple languages, converts speech to text, scans photos for spoken answers, and scales for all visual, hearing, or physical needs — zero installation required.</p>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="heroReadBtn" type="button">🔊 Read Webpage Aloud</button>
+          <a href="#features" class="btn btn-ghost">Explore Features</a>
+        </div>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="orb o1"></div>
+        <div class="orb o2"></div>
+        <div class="floaty f1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg> Speech to Text</div>
+        <div class="floaty f2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg> Read Webpage</div>
+        <div class="floaty f3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> 17+ Languages</div>
+        <div class="floaty f4">A+ Font Scaling</div>
+        <div class="floaty f5">◐ High Contrast</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">About AccessAll</span>
+        <h2>One simple interface, three kinds of independence</h2>
+        <p>AccessAll is a lightweight web-based accessibility platform developed to improve digital accessibility. It combines multiple assistive tools into one simple interface — no expensive hardware, no software installation, no paid services.</p>
+      </div>
+      <div class="about-grid">
+        <div class="glass about-card reveal">
+          <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <h3>Visually Impaired Users</h3>
+          <p>Text-to-speech page reader, high contrast themes, and scalable typography for clearer reading in any language.</p>
+        </div>
+        <div class="glass about-card reveal">
+          <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg></div>
+          <h3>Hearing Impaired Users</h3>
+          <p>Speech-to-text and live captioning turn spoken words into readable text instantly.</p>
+        </div>
+        <div class="glass about-card reveal">
+          <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h12"/></svg></div>
+          <h3>Physically Impaired Users</h3>
+          <p>Every feature works with the keyboard alone — no pointer or fine motor control required.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="section-alt" id="features">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">Features</span>
+        <h2>Powerful Assistive Tools. Zero Installs.</h2>
+        <p>Each feature runs directly in your browser and works alongside the top toolbar controls.</p>
+      </div>
+      <div class="features-grid">
+        
+        <!-- FEATURE 1: WEBPAGE & CUSTOM TEXT-TO-SPEECH -->
+        <div class="glass feature-card highlighted reveal">
+          <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5.5a9 9 0 0 1 0 13"/></svg></div>
+          <h3>Webpage Text-to-Speech</h3>
+          <p>Click once to read the entire webpage out loud in natural audio speech. Works in English and translates smoothly to 17+ global languages.</p>
+          <div class="feature-card-actions">
+            <button class="a11y-btn a11y-btn-active" id="featureReadWebpageBtn" type="button">🔊 Read Webpage Now</button>
+            <a class="learn-more" href="#demo">Try Custom Text →</a>
+          </div>
+        </div>
+
+        <!-- FEATURE 2: MULTILINGUAL WEBPAGE TRANSLATION -->
+        <div class="glass feature-card highlighted reveal">
+          <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+          <h3>Multilingual Webpage Translation</h3>
+          <p>Convert the full English text of this webpage into Hindi, Marathi, Spanish, French, Arabic, and more with instant text-to-speech voice matching.</p>
+          <div class="feature-card-actions">
+            <label for="featureLangSelect" class="sr-only">Select Language for Translation</label>
+            <select id="featureLangSelect" class="lang-select" style="width:100%;">
+              <option value="en-US">🌐 Switch Language...</option>
+              <option value="hi-IN">🇮🇳 हिन्दी (Hindi)</option>
+              <option value="mr-IN">🇮🇳 मराठी (Marathi)</option>
+              <option value="bn-IN">🇮🇳 বাংলা (Bengali)</option>
+              <option value="ta-IN">🇮🇳 தமிழ் (Tamil)</option>
+              <option value="te-IN">🇮🇳 తెలుగు (Telugu)</option>
+              <option value="es-ES">🇪🇸 Español</option>
+              <option value="fr-FR">🇫🇷 Français</option>
+              <option value="de-DE">🇩🇪 Deutsch</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- FEATURE 3: SPEECH TO TEXT -->
+        <div class="glass feature-card reveal">
+          <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg></div>
+          <h3>Speech-to-Text</h3>
+          <p>Speak into your microphone and watch your words appear as live, editable text on screen in real time.</p>
+          <div class="feature-card-actions">
+            <a class="learn-more" href="#demo">Try Microphone Input →</a>
+          </div>
+        </div>
+
+        <!-- FEATURE 4: KEYBOARD NAVIGATION -->
+        <div class="glass feature-card reveal">
+          <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="10"/><line x1="10" y1="10" x2="10" y2="10"/></svg></div>
+          <h3>Keyboard Navigation</h3>
+          <p>Tab, Enter, and Space move through every single control and section — completely operable without a mouse.</p>
+          <div class="feature-card-actions">
+            <a class="learn-more" href="#demo">See Focus Rings →</a>
+          </div>
+        </div>
+
+        <!-- FEATURE 5: FONT SIZE ADJUSTMENT -->
+        <div class="glass feature-card reveal">
+          <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></div>
+          <h3>Font Size Scaling</h3>
+          <p>Increase or decrease text size across the entire website with high legibility fonts (Atkinson Hyperlegible).</p>
+          <div class="feature-card-actions">
+            <a class="learn-more" href="#demo">Test Scaling →</a>
+          </div>
+        </div>
+
+        <!-- FEATURE 6: HIGH CONTRAST MODE -->
+        <div class="glass feature-card reveal">
+          <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 0 0 20z" fill="currentColor" stroke="none"/></svg></div>
+          <h3>High Contrast Mode</h3>
+          <p>Switch to a ultra-bright black and amber high contrast palette for low vision users and night reading.</p>
+          <div class="feature-card-actions">
+            <a class="learn-more" href="#demo">Toggle Theme →</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- DEMO -->
+  <section id="demo">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">Interactive Accessibility Lab</span>
+        <h2>Live Browser Accessibility Controls</h2>
+        <p>These controls use your actual browser speech synthesis, microphone recognition, and AI vision engines.</p>
+      </div>
+      <div class="glass demo-panel reveal">
+        <div>
+          <!-- TEXT TO SPEECH BOX -->
+          <label for="ttsInput" style="font-weight:700; display:block; margin-bottom:8px;">Custom Text-to-Speech Reader</label>
+          <textarea id="ttsInput" placeholder="Type or paste text here, then press Read Aloud...">Welcome to AccessAll. You can click 'Read Webpage' at the top to listen to the whole site, or type custom text here to be read aloud in any language you select.</textarea>
+          <div class="demo-actions">
+            <button class="btn btn-primary" id="readAloudBtn" type="button">🔊 Read Custom Text</button>
+            <button class="btn btn-ghost" id="stopReadBtn" type="button">⏹ Stop Speech</button>
+          </div>
+          <p class="demo-status" id="ttsStatus" aria-live="polite"></p>
+
+          <!-- SPEECH TO TEXT BOX -->
+          <label for="sttOutput" style="font-weight:700; display:block; margin:24px 0 8px;">Speech-to-Text Transcriber</label>
+          <textarea id="sttOutput" placeholder="Press Start Listening and speak into your microphone — your words will appear here..."></textarea>
+          <div class="demo-actions">
+            <button class="btn btn-primary" id="listenBtn" type="button" aria-pressed="false">
+              <svg id="micIcon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="23"/>
+              </svg>
+              <span id="listenBtnLabel">Start Microphone</span>
+            </button>
+            <button class="btn btn-ghost" id="stopListenBtn" type="button">⏹ Stop Microphone</button>
+          </div>
+          <p class="demo-status" id="sttStatus" aria-live="polite"></p>
+        </div>
+
+        <div class="demo-side">
+          <!-- Webpage Reader Box -->
+          <div class="glass mini-card" style="border: 2px solid var(--teal);">
+            <h4>🔊 Read Entire Webpage</h4>
+            <p style="font-size:0.85rem; opacity:0.8; margin-bottom:10px;">Reads all headers, paragraphs, and sections in sequence.</p>
+            <div class="mini-row">
+              <button class="a11y-btn a11y-btn-active" id="demoReadWebpageBtn" type="button">🔊 Read Full Page</button>
+              <button class="a11y-btn" id="demoStopWebpageBtn" type="button">⏹ Stop</button>
+            </div>
+          </div>
+
+          <!-- Language Selector -->
+          <div class="glass mini-card">
+            <h4><label for="demoLangSelect">🌐 Webpage & Voice Language</label></h4>
+            <p style="font-size:0.85rem; opacity:0.8; margin-bottom:10px;">Translates the entire site and sets the voice engine language.</p>
+            <select id="demoLangSelect" class="lang-select" style="width:100%;">
+              <option value="en-US">English (Original)</option>
+              <option value="hi-IN">हिन्दी (Hindi)</option>
+              <option value="mr-IN">मराठी (Marathi)</option>
+              <option value="bn-IN">বাংলা (Bengali)</option>
+              <option value="ta-IN">தமிழ் (Tamil)</option>
+              <option value="te-IN">తెలుగు (Telugu)</option>
+              <option value="gu-IN">ગુજરાતી (Gujarati)</option>
+              <option value="kn-IN">ಕನ್ನಡ (Kannada)</option>
+              <option value="ml-IN">മലയാളം (Malayalam)</option>
+              <option value="pa-IN">ਪੰਜਾਬੀ (Punjabi)</option>
+              <option value="ur-PK">اردو (Urdu)</option>
+              <option value="es-ES">Español</option>
+              <option value="fr-FR">Français</option>
+              <option value="de-DE">Deutsch</option>
+              <option value="ar-SA">العربية</option>
+              <option value="ja-JP">日本語</option>
+              <option value="zh-CN">中文</option>
+            </select>
+          </div>
+
+          <!-- Font Scaling -->
+          <div class="glass mini-card">
+            <h4>Typography Scaler</h4>
+            <p style="font-size:0.85rem; opacity:0.8; margin-bottom:10px;">Adjust font size across the whole document.</p>
+            <div class="mini-row">
+              <button class="a11y-btn" id="demoFontDec">A−</button>
+              <button class="a11y-btn" id="demoFontReset">Reset</button>
+              <button class="a11y-btn" id="demoFontInc">A+</button>
+            </div>
+          </div>
+
+          <!-- Contrast Toggle -->
+          <div class="glass mini-card">
+            <h4>High Contrast Theme</h4>
+            <p style="font-size:0.85rem; opacity:0.8; margin-bottom:10px;">Toggle black &amp; amber high contrast view.</p>
+            <button class="a11y-btn" id="demoContrastToggle" aria-pressed="false">◐ Toggle High Contrast</button>
+          </div>
+
+          <!-- Photo Spoken Answer -->
+          <div class="glass mini-card">
+            <h4>Photo → Spoken Answer</h4>
+            <p style="font-size:0.85rem; opacity:0.8; margin-bottom:10px;">Capture or upload a image to hear objects &amp; text read out loud.</p>
+            <video id="camVideo" playsinline muted style="display:none; width:100%; border-radius:12px; margin-bottom:10px;"></video>
+            <img id="photoPreview" alt="Captured photo preview" style="display:none; width:100%; border-radius:12px; margin-bottom:10px;">
+            <div class="mini-row">
+              <button class="a11y-btn" id="camOpenBtn" type="button">📷 Open Camera</button>
+              <button class="a11y-btn" id="camSnapBtn" type="button">📸 Click &amp; Answer</button>
+              <button class="a11y-btn" id="photoUploadBtn" type="button">🖼 Upload Photo</button>
+              <button class="a11y-btn" id="photoStopBtn" type="button">⏹ Stop</button>
+            </div>
+            <input type="file" id="photoFile" accept="image/*" style="display:none;">
+            <p class="demo-status" id="photoStatus" aria-live="polite"></p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY CHOOSE -->
+  <section class="section-alt">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">Why Choose AccessAll</span>
+        <h2>Built for total digital inclusion</h2>
+      </div>
+      <div class="stats-grid">
+        <div class="glass stat-card reveal"><strong>100%</strong>Browser Based</div>
+        <div class="glass stat-card reveal"><strong>0</strong>Installation Required</div>
+        <div class="glass stat-card reveal"><strong>17+</strong>Languages Supported</div>
+        <div class="glass stat-card reveal"><strong>Instant</strong>Webpage Text-to-Speech</div>
+        <div class="glass stat-card reveal"><strong>Any Screen</strong>Responsive Design</div>
+        <div class="glass stat-card reveal"><strong>First</strong>Accessibility First</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRINCIPLES -->
+  <section>
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">Our Methodology</span>
+        <h2>Inclusive Accessibility Principles</h2>
+        <p>The six standards we apply to every feature we build.</p>
+      </div>
+      <div class="timeline">
+        <div class="t-item reveal"><div class="t-num">1</div><h3>Identify User Needs</h3><p>Understand real barriers faced by visually, hearing, and physically impaired users worldwide.</p></div>
+        <div class="t-item reveal"><div class="t-num">2</div><h3>Design Accessible Interface</h3><p>Plan layouts and controls around clarity, high contrast, and keyboard navigation.</p></div>
+        <div class="t-item reveal"><div class="t-num">3</div><h3>Implement Audio & Multilingual Features</h3><p>Build full webpage text-to-speech, multilingual translation, speech-to-text, and contrast tools.</p></div>
+        <div class="t-item reveal"><div class="t-num">4</div><h3>Cross-Browser Compatibility</h3><p>Test across browsers so every feature works natively without external plugins.</p></div>
+        <div class="t-item reveal"><div class="t-num">5</div><h3>Real User Testing</h3><p>Validate with people who rely on assistive technologies daily.</p></div>
+        <div class="t-item reveal"><div class="t-num">6</div><h3>Continuous Improvement</h3><p>Refine based on WCAG standards, feedback, and browser speech APIs.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="section-alt">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">Testimonials</span>
+        <h2>What our users are saying</h2>
+      </div>
+      <div class="test-grid">
+        <div class="glass test-card reveal"><p>"AccessAll makes reading full webpages so effortless. One click and the site reads itself out loud!"</p><div class="test-name">— Visual Accessibility Tester</div></div>
+        <div class="glass test-card reveal"><p>"Translating the entire webpage into Hindi and hearing it read back natively is amazing!"</p><div class="test-name">— Multilingual User</div></div>
+        <div class="glass test-card reveal"><p>"A masterclass in inclusive web design. The high contrast and keyboard controls are super smooth."</p><div class="test-name">— Web Accessibility Advocate</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section>
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">FAQ</span>
+        <h2>Frequently Asked Questions</h2>
+      </div>
+      <div class="faq reveal">
+        <details><summary>What is AccessAll?</summary><p>AccessAll is a browser-based accessibility platform that combines full webpage text-to-speech, multilingual translation, speech-to-text, keyboard navigation, font scaling, and high contrast mode into one simple interface.</p></details>
+        <details><summary>How does the Webpage Text-to-Speech feature work?</summary><p>Simply click the "🔊 Read Webpage" button in the toolbar or features section. AccessAll will scan the main text content of the site, highlight sections, and read them aloud using your browser's speech synthesis engine.</p></details>
+        <details><summary>Does full webpage translation support Indian and global languages?</summary><p>Yes! You can convert the webpage into Hindi, Marathi, Bengali, Tamil, Telugu, Gujarati, Kannada, Malayalam, Punjabi, Urdu, Spanish, French, German, Arabic, Japanese, Chinese, and back to English anytime.</p></details>
+        <details><summary>Does it require any plugin or software installation?</summary><p>No. AccessAll runs 100% inside your standard web browser using free, built-in browser standards.</p></details>
+        <details><summary>Is AccessAll free to use?</summary><p>Yes, AccessAll is completely free and open for public access.</p></details>
+        <details><summary>Does it work on mobile phones and tablets?</summary><p>Yes, all features, buttons, typography, and controls are fully responsive across desktop, tablet, and mobile devices.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- TEAM -->
+  <section class="section-alt" id="team">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">Meet the Project Team</span>
+        <h2>Department of Computer Science and Engineering</h2>
+        <p>Priyadarshini College of Engineering, Nagpur</p>
+      </div>
+      <div class="team-grid">
+        <div class="glass team-card reveal"><div class="avatar">SS</div><h4>Saloni Singh</h4><span>Team Member</span></div>
+        <div class="glass team-card reveal"><div class="avatar">KK</div><h4>Khushi Karemore</h4><span>Team Member</span></div>
+        <div class="glass team-card reveal"><div class="avatar">RS</div><h4>Riddhi Sarosiya</h4><span>Team Member</span></div>
+        <div class="glass team-card reveal"><div class="avatar">SM</div><h4>Sanchita Moundekar</h4><span>Team Member</span></div>
+        <div class="glass team-card reveal"><div class="avatar">AA</div><h4>Adhitya Anil</h4><span>Team Member</span></div>
+        <div class="glass team-card reveal"><div class="avatar">AR</div><h4>Ankitkumar Ray</h4><span>Team Member</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">Contact Us</span>
+        <h2>Get in touch with AccessAll</h2>
+      </div>
+      <div class="contact-grid">
+        <div class="contact-info reveal">
+          <div class="glass contact-row"><strong>Email:</strong>&nbsp;contact@accessall.example</div>
+          <div class="glass contact-row"><strong>Phone:</strong>&nbsp;+91 00000 00000</div>
+          <div class="glass contact-row"><strong>Location:</strong>&nbsp;Nagpur, Maharashtra, India</div>
+          <div class="map-placeholder">Interactive Map Location</div>
+        </div>
+        <form class="glass feedback reveal" id="feedbackForm">
+          <label for="fbName" class="sr-only">Name</label>
+          <input id="fbName" type="text" placeholder="Your name" required />
+          <label for="fbEmail" class="sr-only">Email</label>
+          <input id="fbEmail" type="email" placeholder="Your email address" required />
+          <label for="fbMessage" class="sr-only">Message</label>
+          <textarea id="fbMessage" placeholder="Share your feedback or suggestions..." required></textarea>
+          <button class="btn btn-primary" type="submit">Submit Feedback</button>
+          <p class="demo-status" id="formStatus" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap footer-inner">
+    <div>
+      <a href="#top" class="brand"><span class="brand-mark">A</span> AccessAll</a>
+      <p>Making the Web Accessible for Everyone</p>
+    </div>
+    <div>
+      <p>Department of Computer Science and Engineering</p>
+      <p>Priyadarshini College of Engineering, Nagpur</p>
+    </div>
+  </div>
+  <div class="wrap footer-bottom">© 2026 AccessAll. All Rights Reserved.</div>
+</footer>
+
+<!-- MAIN ACCESSIBILITY & MULTILINGUAL SCRIPT -->
+<script>
+(function(){
+  // ---------- Font Scaling Logic ----------
+  var scale = 1;
+  var root = document.documentElement;
+  function applyScale(){ root.style.setProperty('--scale', scale.toFixed(2)); }
+  function inc(){ scale = Math.min(1.6, scale + 0.1); applyScale(); }
+  function dec(){ scale = Math.max(0.8, scale - 0.1); applyScale(); }
+  function reset(){ scale = 1; applyScale(); }
+
+  [document.getElementById('fontInc'), document.getElementById('demoFontInc')].forEach(function(b){ if(b) b.addEventListener('click', inc); });
+  [document.getElementById('fontDec'), document.getElementById('demoFontDec')].forEach(function(b){ if(b) b.addEventListener('click', dec); });
+  [document.getElementById('fontReset'), document.getElementById('demoFontReset')].forEach(function(b){ if(b) b.addEventListener('click', reset); });
+
+  // ---------- Contrast Toggle Logic ----------
+  function toggleContrast(){
+    var on = document.body.classList.toggle('contrast');
+    [document.getElementById('contrastToggle'), document.getElementById('demoContrastToggle')].forEach(function(b){
+      if(b) b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+  if(document.getElementById('contrastToggle')) document.getElementById('contrastToggle').addEventListener('click', toggleContrast);
+  if(document.getElementById('demoContrastToggle')) document.getElementById('demoContrastToggle').addEventListener('click', toggleContrast);
+
+  // ---------- Sync Language Selectors ----------
+  var globalLangSelect = document.getElementById('globalLangSelect');
+  var featureLangSelect = document.getElementById('featureLangSelect');
+  var demoLangSelect = document.getElementById('demoLangSelect');
+
+  function syncLangSelects(val){
+    [globalLangSelect, featureLangSelect, demoLangSelect].forEach(function(sel){
+      if(sel && sel.value !== val){
+        sel.value = val;
+      }
+    });
+    translateWebpageTo(val);
+  }
+
+  if(globalLangSelect) globalLangSelect.addEventListener('change', function(e){ syncLangSelects(e.target.value); });
+  if(featureLangSelect) featureLangSelect.addEventListener('change', function(e){ syncLangSelects(e.target.value); });
+  if(demoLangSelect) demoLangSelect.addEventListener('change', function(e){ syncLangSelects(e.target.value); });
+
+  // ---------- Webpage Multilingual Translation Engine ----------
+  // Store original English texts of all translatable DOM text nodes
+  var originalTextNodes = [];
+  var isTranslated = false;
+  var currentLangCode = 'en-US';
+
+  // High quality translation dictionary for core web app interface items (instant response)
+  var UI_DICTIONARY = {
+    'hi-IN': {
+      'About': 'हमारे बारे में', 'Features': 'विशेषताएं', 'Demo': 'डेमो', 'Team': 'टीम', 'Contact': 'संपर्क',
+      'Read Webpage': 'वेबपेज सुनें', '🔊 Read Webpage': '🔊 वेबपेज सुनें', '🔊 Read Webpage Now': '🔊 अभी वेबपेज सुनें',
+      '🔊 Read Full Page': '🔊 पूरा पेज सुनें', '🔊 Read Aloud': '🔊 बोलकर पढ़ें', 'Try Features': 'सुविधाएं आजमाएं',
+      'Learn More': 'अधिक जानें', 'Making the Web Accessible for Everyone': 'वेब को सभी के लिए सुलभ बनाना',
+      'One simple interface, three kinds of independence': 'एक सरल इंटरफेस, तीन प्रकार की स्वतंत्रता',
+      'Visually Impaired Users': 'दृष्टिबाधित उपयोगकर्ता', 'Hearing Impaired Users': 'श्रवणबाधित उपयोगकर्ता',
+      'Physically Impaired Users': 'शारीरिक रूप से अक्षम उपयोगकर्ता', 'Webpage Text-to-Speech': 'वेबपेज टेक्स्ट-टू-स्पीच',
+      'Multilingual Webpage Translation': 'बहुभाषी वेबपेज अनुवाद', 'Speech-to-Text': 'स्पीच-टू-टेक्स्ट',
+      'Keyboard Navigation': 'कीबोर्ड नेविगेशन', 'Font Size Scaling': 'फ़ॉन्ट का आकार बदलना',
+      'High Contrast Mode': 'उच्च कंट्रास्ट मोड', 'Submit Feedback': 'प्रतिक्रिया भेजें',
+      'Common questions': 'सामान्य प्रश्न', 'Frequently Asked Questions': 'अक्सर पूछे जाने वाले प्रश्न'
+    },
+    'mr-IN': {
+      'About': 'आमच्याबद्दल', 'Features': 'वैशिष्ट्ये', 'Demo': 'डेमो', 'Team': 'टीम', 'Contact': 'संपर्क',
+      'Read Webpage': 'वेबपेज ऐका', '🔊 Read Webpage': '🔊 वेबपेज ऐका', '🔊 Read Webpage Now': '🔊 आता वेबपेज ऐका',
+      'Making the Web Accessible for Everyone': 'वेब प्रत्येकासाठी सुलभ बनवणे', 'Visually Impaired Users': 'दृष्टीहीन वापरकर्ते',
+      'Hearing Impaired Users': 'कर्णबधिर वापरकर्ते', 'Physically Impaired Users': 'दिव्यांग वापरकर्ते',
+      'Webpage Text-to-Speech': 'वेबपेज मजकूर-ते-आवाज', 'Multilingual Webpage Translation': 'बहुभाषिक वेबपेज भाषांतर'
+    },
+    'es-ES': {
+      'About': 'Acerca de', 'Features': 'Características', 'Demo': 'Demostración', 'Team': 'Equipo', 'Contact': 'Contacto',
+      'Read Webpage': 'Leer página web', '🔊 Read Webpage': '🔊 Leer página web', 'Making the Web Accessible for Everyone': 'Haciendo la web accesible para todos',
+      'Visually Impaired Users': 'Usuarios con discapacidad visual', 'Hearing Impaired Users': 'Usuarios con discapacidad auditiva',
+      'Webpage Text-to-Speech': 'Texto a voz en página web', 'Multilingual Webpage Translation': 'Traducción de páginas web multilingüe'
+    },
+    'fr-FR': {
+      'About': 'À propos', 'Features': 'Fonctionnalités', 'Demo': 'Démonstration', 'Team': 'Équipe', 'Contact': 'Contact',
+      'Read Webpage': 'Lire la page web', '🔊 Read Webpage': '🔊 Lire la page web', 'Making the Web Accessible for Everyone': 'Rendre le Web accessible à tous',
+      'Visually Impaired Users': 'Déficients visuels', 'Hearing Impaired Users': 'Malentendants',
+      'Webpage Text-to-Speech': 'Synthèse vocale de page web', 'Multilingual Webpage Translation': 'Traduction de page web multilingue'
+    },
+    'de-DE': {
+      'About': 'Über uns', 'Features': 'Funktionen', 'Demo': 'Demo', 'Team': 'Team', 'Contact': 'Kontakt',
+      'Read Webpage': 'Webseite vorlesen', '🔊 Read Webpage': '🔊 Webseite vorlesen', 'Making the Web Accessible for Everyone': 'Das Web für alle zugänglich machen',
+      'Visually Impaired Users': 'Sehbehinderte Nutzer', 'Hearing Impaired Users': 'Hörgeschädigte Nutzer'
+    },
+    'ar-SA': {
+      'About': 'عن الموقع', 'Features': 'الميزات', 'Demo': 'تجربة', 'Team': 'الفريق', 'Contact': 'اتصل بنا',
+      'Read Webpage': 'قراءة الصفحة', '🔊 Read Webpage': '🔊 قراءة الصفحة', 'Making the Web Accessible for Everyone': 'جعل الويب متاحًا للجميع'
+    }
+  };
+
+  // Collect text nodes across main sections of the webpage
+  function initTextNodes(){
+    var mainEl = document.getElementById('main');
+    var navEl = document.querySelector('.primary-nav');
+    if(!mainEl) return;
+
+    var walker = document.createTreeWalker(
+      mainEl,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode: function(node){
+          // Ignore whitespace, scripts, code, inside textareas
+          var parent = node.parentNode;
+          if(!parent) return NodeFilter.FILTER_REJECT;
+          var tag = parent.tagName.toLowerCase();
+          if(tag === 'script' || tag === 'style' || tag === 'textarea' || tag === 'option' || tag === 'input') return NodeFilter.FILTER_REJECT;
+          if(node.textContent.trim().length < 2) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      }
+    );
+
+    originalTextNodes = [];
+    while(walker.nextNode()){
+      originalTextNodes.push({
+        node: walker.currentNode,
+        originalText: walker.currentNode.textContent
+      });
+    }
+
+    // Also collect nav links
+    if(navEl){
+      var navLinks = navEl.querySelectorAll('a');
+      navLinks.forEach(function(link){
+        if(link.childNodes.length === 1 && link.childNodes[0].nodeType === 3){
+          originalTextNodes.push({
+            node: link.childNodes[0],
+            originalText: link.childNodes[0].textContent
+          });
+        }
+      });
+    }
+  }
+
+  // Translate full webpage DOM text nodes
+  var transBanner = document.getElementById('transBanner');
+  var transBannerText = document.getElementById('transBannerText');
+  var resetTransBtn = document.getElementById('resetTransBtn');
+
+  async function translateWebpageTo(targetLangCode){
+    currentLangCode = targetLangCode;
+    var langShort = targetLangCode.split('-')[0];
+
+    if(!originalTextNodes.length) initTextNodes();
+
+    if(targetLangCode === 'en-US' || targetLangCode === 'en'){
+      // Reset back to English
+      originalTextNodes.forEach(function(item){
+        item.node.textContent = item.originalText;
+      });
+      if(transBanner) transBanner.classList.remove('visible');
+      isTranslated = false;
+      return;
+    }
+
+    isTranslated = true;
+    if(transBanner){
+      transBanner.classList.add('visible');
+      transBannerText.textContent = 'Translating webpage to ' + targetLangCode + '...';
+    }
+
+    var dict = UI_DICTIONARY[targetLangCode] || {};
+
+    // Step 1: Immediate local UI dictionary translation for ultra fast response
+    originalTextNodes.forEach(function(item){
+      var trimmed = item.originalText.trim();
+      if(dict[trimmed]){
+        item.node.textContent = item.originalText.replace(trimmed, dict[trimmed]);
+      }
+    });
+
+    // Step 2: Dynamic API translation (MyMemory Free Translation API) for paragraphs and dynamic text
+    try {
+      var batchPromises = originalTextNodes.map(async function(item){
+        var trimmed = item.originalText.trim();
+        // If already converted via dictionary or short, skip API fetch
+        if(dict[trimmed]) return;
+        if(trimmed.length < 3) return;
+
+        var pair = langShort === 'zh' ? 'zh-CN' : langShort;
+        var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(trimmed) + '&langpair=en|' + pair;
+        
+        try {
+          var res = await fetch(url);
+          var json = await res.json();
+          if(json && json.responseData && json.responseData.translatedText){
+            var translated = json.responseData.translatedText;
+            // Prevent HTML injection
+            item.node.textContent = item.originalText.replace(trimmed, translated);
+          }
+        } catch(err){
+          // Silent fallback to dictionary/original text
+        }
+      });
+
+      await Promise.all(batchPromises.slice(0, 30)); // Translate main visible blocks
+      if(transBannerText) transBannerText.textContent = '✓ Webpage translated into ' + targetLangCode;
+    } catch(e){
+      if(transBannerText) transBannerText.textContent = '✓ Webpage partially translated into ' + targetLangCode;
+    }
+  }
+
+  if(resetTransBtn){
+    resetTransBtn.addEventListener('click', function(){
+      syncLangSelects('en-US');
+    });
+  }
+
+  // ---------- Webpage Text-to-Speech Engine ----------
+  var synth = window.speechSynthesis;
+  var isReadingWebpage = false;
+  var speechUtterance = null;
+  var speechQueue = [];
+  var currentSpeechIndex = 0;
+
+  var floatingBar = document.getElementById('speechFloatingBar');
+  var barStatus = document.getElementById('speechBarStatus');
+  var pauseBtn = document.getElementById('speechPauseBtn');
+  var resumeBtn = document.getElementById('speechResumeBtn');
+  var stopBtn = document.getElementById('speechStopBtn');
+
+  function collectWebpageTextSections(){
+    var sections = [];
+    var mainEl = document.getElementById('main');
+    if(!mainEl) return sections;
+
+    // Collect headings, paragraphs, bullet points, and key block elements
+    var elements = mainEl.querySelectorAll('h1, h2, h3, h4, p, .stat-card, .test-card, details summary');
+    elements.forEach(function(el){
+      var text = el.innerText.trim();
+      if(text.length > 2 && el.offsetWidth > 0 && el.offsetHeight > 0){
+        sections.push({
+          element: el,
+          text: text
+        });
+      }
+    });
+    return sections;
+  }
+
+  function highlightElement(el){
+    // Remove previous highlight
+    document.querySelectorAll('.speech-reading-highlight').forEach(function(item){
+      item.classList.remove('speech-reading-highlight');
+    });
+    if(el){
+      el.classList.add('speech-reading-highlight');
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  function stopWebpageSpeech(){
+    if(synth) synth.cancel();
+    isReadingWebpage = false;
+    speechQueue = [];
+    currentSpeechIndex = 0;
+    highlightElement(null);
+    if(floatingBar) floatingBar.classList.remove('active');
+    if(pauseBtn) pauseBtn.style.display = 'inline-flex';
+    if(resumeBtn) resumeBtn.style.display = 'none';
+  }
+
+  function readNextWebpageSection(){
+    if(!isReadingWebpage || currentSpeechIndex >= speechQueue.length){
+      stopWebpageSpeech();
+      if(barStatus) barStatus.textContent = 'Finished reading webpage.';
+      return;
+    }
+
+    var item = speechQueue[currentSpeechIndex];
+    highlightElement(item.element);
+
+    if(barStatus) barStatus.textContent = 'Reading (' + (currentSpeechIndex + 1) + '/' + speechQueue.length + '): ' + item.text.substring(0, 30) + '...';
+
+    speechUtterance = new SpeechSynthesisUtterance(item.text);
+    speechUtterance.lang = currentLangCode;
+
+    // Match best available voice for language
+    var voices = synth ? synth.getVoices() : [];
+    if(voices.length){
+      var want = currentLangCode.toLowerCase();
+      var voiceMatch = voices.find(function(v){ return v.lang.toLowerCase().replace('_','-') === want; }) ||
+                         voices.find(function(v){ return v.lang.toLowerCase().startsWith(want.split('-')[0]); });
+      if(voiceMatch) speechUtterance.voice = voiceMatch;
+    }
+
+    speechUtterance.onend = function(){
+      if(isReadingWebpage){
+        currentSpeechIndex++;
+        readNextWebpageSection();
+      }
+    };
+
+    speechUtterance.onerror = function(e){
+      console.warn('Speech synthesis error:', e);
+      if(isReadingWebpage){
+        currentSpeechIndex++;
+        readNextWebpageSection();
+      }
+    };
+
+    synth.speak(speechUtterance);
+  }
+
+  function startReadingWebpage(){
+    if(!synth){
+      alert('Speech synthesis is not supported in this browser.');
+      return;
+    }
+    stopWebpageSpeech();
+
+    speechQueue = collectWebpageTextSections();
+    if(!speechQueue.length){
+      alert('No readable text found on webpage.');
+      return;
+    }
+
+    isReadingWebpage = true;
+    currentSpeechIndex = 0;
+
+    if(floatingBar) floatingBar.classList.add('active');
+    if(pauseBtn) pauseBtn.style.display = 'inline-flex';
+    if(resumeBtn) resumeBtn.style.display = 'none';
+
+    readNextWebpageSection();
+  }
+
+  // Bind Webpage Read buttons across header, hero, feature cards & lab
+  [
+    document.getElementById('readWebpageBtn'),
+    document.getElementById('heroReadBtn'),
+    document.getElementById('featureReadWebpageBtn'),
+    document.getElementById('demoReadWebpageBtn')
+  ].forEach(function(btn){
+    if(btn){
+      btn.addEventListener('click', function(){
+        if(isReadingWebpage){
+          stopWebpageSpeech();
+        } else {
+          startReadingWebpage();
+        }
+      });
+    }
+  });
+
+  if(document.getElementById('demoStopWebpageBtn')){
+    document.getElementById('demoStopWebpageBtn').addEventListener('click', stopWebpageSpeech);
+  }
+
+  // Floating Player Bar Controls
+  if(pauseBtn){
+    pauseBtn.addEventListener('click', function(){
+      if(synth && synth.speaking){
+        synth.pause();
+        pauseBtn.style.display = 'none';
+        resumeBtn.style.display = 'inline-flex';
+        if(barStatus) barStatus.textContent = 'Paused Webpage Reader';
+      }
+    });
+  }
+
+  if(resumeBtn){
+    resumeBtn.addEventListener('click', function(){
+      if(synth && synth.paused){
+        synth.resume();
+        resumeBtn.style.display = 'none';
+        pauseBtn.style.display = 'inline-flex';
+        if(barStatus) barStatus.textContent = 'Resumed Webpage Reader...';
+      }
+    });
+  }
+
+  if(stopBtn) stopBtn.addEventListener('click', stopWebpageSpeech);
+
+  // ---------- Custom Text to Speech ----------
+  var ttsInput = document.getElementById('ttsInput');
+  var ttsStatus = document.getElementById('ttsStatus');
+
+  if(document.getElementById('readAloudBtn')){
+    document.getElementById('readAloudBtn').addEventListener('click', function(){
+      if(!synth){ if(ttsStatus) ttsStatus.textContent = 'Speech synthesis is not supported in this browser.'; return; }
+      stopWebpageSpeech();
+      synth.cancel();
+      var text = ttsInput ? ttsInput.value.trim() : '';
+      if(!text){ if(ttsStatus) ttsStatus.textContent = 'Type some text first.'; return; }
+      var utter = new SpeechSynthesisUtterance(text);
+      utter.lang = currentLangCode;
+      
+      var voices = synth.getVoices();
+      if(voices.length){
+        var want = currentLangCode.toLowerCase();
+        var v = voices.find(function(x){ return x.lang.toLowerCase().replace('_','-') === want; }) ||
+                voices.find(function(x){ return x.lang.toLowerCase().startsWith(want.split('-')[0]); });
+        if(v) utter.voice = v;
+      }
+
+      utter.onstart = function(){ if(ttsStatus) ttsStatus.textContent = 'Reading custom text aloud…'; };
+      utter.onend = function(){ if(ttsStatus) ttsStatus.textContent = 'Finished reading.'; };
+      utter.onerror = function(){ if(ttsStatus) ttsStatus.textContent = 'Something went wrong while reading.'; };
+      synth.speak(utter);
+    });
+  }
+
+  if(document.getElementById('stopReadBtn')){
+    document.getElementById('stopReadBtn').addEventListener('click', function(){
+      if(synth){ synth.cancel(); if(ttsStatus) ttsStatus.textContent = 'Stopped custom text reading.'; }
+    });
+  }
+
+  // ---------- Speech to Text Logic ----------
+  var sttOutput = document.getElementById('sttOutput');
+  var sttStatus = document.getElementById('sttStatus');
+  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var recognition = null;
+  var listening = false;
+
+  var listenBtn = document.getElementById('listenBtn');
+  var listenBtnLabel = document.getElementById('listenBtnLabel');
+
+  function setListeningUI(on){
+    if(!listenBtn) return;
+    listenBtn.classList.toggle('is-listening', on);
+    listenBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    if(listenBtnLabel) listenBtnLabel.textContent = on ? 'Listening…' : 'Start Microphone';
+  }
+
+  var insecureContext = !window.isSecureContext;
+  if(SpeechRecognition && insecureContext && sttStatus){
+    sttStatus.textContent = 'Note: Microphone requires a secure https:// or localhost address.';
+  }
+
+  if(SpeechRecognition){
+    recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = currentLangCode;
+
+    recognition.onresult = function(event){
+      var finalText = '';
+      for(var i = event.resultIndex; i < event.results.length; i++){
+        if(event.results[i].isFinal){ finalText += event.results[i][0].transcript + ' '; }
+      }
+      if(finalText && sttOutput){ sttOutput.value += finalText; }
+    };
+    recognition.onerror = function(e){
+      if(sttStatus){
+        if(e.error === 'not-allowed'){
+          sttStatus.textContent = 'Microphone access was blocked. Please check site permissions.';
+        } else if(e.error === 'no-speech'){
+          sttStatus.textContent = 'No speech detected. Speak right after pressing Start.';
+        } else {
+          sttStatus.textContent = 'Microphone notice: ' + e.error;
+        }
+      }
+      listening = false;
+      setListeningUI(false);
+    };
+    recognition.onend = function(){
+      if(listening){
+        try { recognition.start(); } catch(err){ listening = false; setListeningUI(false); }
+      } else {
+        setListeningUI(false);
+      }
+    };
+  }
+
+  if(listenBtn){
+    listenBtn.addEventListener('click', function(){
+      if(!recognition){ if(sttStatus) sttStatus.textContent = 'Speech recognition is not supported in this browser.'; return; }
+      if(insecureContext){ if(sttStatus) sttStatus.textContent = 'Microphone needs https:// or localhost.'; return; }
+      if(listening){ return; }
+
+      try { recognition.abort(); } catch(e){}
+
+      listening = true;
+      setTimeout(function(){
+        try {
+          recognition.lang = currentLangCode;
+          recognition.start();
+          if(sttStatus) sttStatus.textContent = 'Listening… speak into microphone now.';
+          setListeningUI(true);
+        } catch(err){
+          listening = false;
+          setListeningUI(false);
+          if(sttStatus) sttStatus.textContent = 'Could not start microphone: ' + err.message;
+        }
+      }, 50);
+    });
+  }
+
+  if(document.getElementById('stopListenBtn')){
+    document.getElementById('stopListenBtn').addEventListener('click', function(){
+      listening = false;
+      setListeningUI(false);
+      if(recognition){ try { recognition.stop(); } catch(e){} }
+      if(sttStatus) sttStatus.textContent = 'Microphone stopped.';
+    });
+  }
+
+  // ---------- Feedback Form ----------
+  if(document.getElementById('feedbackForm')){
+    document.getElementById('feedbackForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      var formStatus = document.getElementById('formStatus');
+      if(formStatus) formStatus.textContent = 'Thank you! Your feedback has been noted.';
+      this.reset();
+    });
+  }
+
+  // ---------- Intersection Scroll Reveal ----------
+  var revealEls = document.querySelectorAll('.reveal');
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){ entry.target.classList.add('in'); io.unobserve(entry.target); }
+      });
+    }, { threshold: 0.1 });
+    revealEls.forEach(function(el){ io.observe(el); });
+  } else {
+    revealEls.forEach(function(el){ el.classList.add('in'); });
+  }
+
+  // Pre-load voices for SpeechSynthesis
+  if(synth && synth.onvoiceschanged !== undefined){
+    synth.onvoiceschanged = function(){};
+  }
+})();
+</script>
+
+<!-- PHOTO TO SPOKEN ANSWER SCRIPT -->
+<script>
+(function(){
+  var statusEl = document.getElementById('photoStatus');
+  var video = document.getElementById('camVideo');
+  var preview = document.getElementById('photoPreview');
+  var fileInput = document.getElementById('photoFile');
+  var synth = window.speechSynthesis;
+  var stream = null, busy = false;
+
+  var OCR_LANG = { hi:'hin', mr:'mar', bn:'ben', ta:'tam', te:'tel', gu:'guj', kn:'kan', ml:'mal',
+                   pa:'pan', ur:'urd', es:'spa', fr:'fra', de:'deu', ar:'ara', ja:'jpn', zh:'chi_sim' };
+
+  function say(msg){ if(statusEl) statusEl.textContent = msg; }
+
+  function loadScript(src){
+    return new Promise(function(res, rej){
+      var s = document.createElement('script');
+      s.src = src; s.onload = res;
+      s.onerror = function(){ rej(new Error('Could not load ' + src)); };
+      document.head.appendChild(s);
+    });
+  }
+
+  var modelPromise = null;
+  function getModel(){
+    if(!modelPromise){
+      modelPromise = loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js')
+        .then(function(){ return loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js'); })
+        .then(function(){ return cocoSsd.load(); });
+      modelPromise.catch(function(){ modelPromise = null; });
+    }
+    return modelPromise;
+  }
+
+  var ocrPromise = null;
+  function getOCR(){
+    if(!ocrPromise){
+      ocrPromise = loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js');
+      ocrPromise.catch(function(){ ocrPromise = null; });
+    }
+    return ocrPromise;
+  }
+
+  function translate(text, langCode){
+    var pair = langCode === 'zh-CN' ? 'zh-CN' : langCode.split('-')[0];
+    if(pair === 'en') return Promise.resolve(text);
+    var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|' + pair;
+    return fetch(url).then(function(r){ return r.json(); }).then(function(j){
+      return (j && j.responseData && j.responseData.translatedText) ? j.responseData.translatedText : text;
+    }).catch(function(){ return text; });
+  }
+
+  function speak(text, langCode){
+    if(!synth){ say('Speech synthesis is not supported.'); return; }
+    synth.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = langCode;
+    var voices = synth.getVoices();
+    var want = langCode.toLowerCase();
+    var v = voices.find(function(x){ return x.lang.toLowerCase().replace('_','-') === want; }) ||
+            voices.find(function(x){ return x.lang.toLowerCase().startsWith(want.split('-')[0]); });
+    if(v){ u.voice = v; }
+    synth.speak(u);
+  }
+
+  function describeObjects(preds){
+    if(!preds.length) return 'I could not recognise any clear objects in this photo.';
+    var counts = {};
+    preds.forEach(function(p){ counts[p.class] = (counts[p.class] || 0) + 1; });
+    var parts = Object.keys(counts).map(function(k){
+      var n = counts[k];
+      return n === 1 ? 'one ' + k : n + ' ' + k + 's';
+    });
+    var list = parts.length > 1 ? parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1] : parts[0];
+    return 'I can see ' + list + '.';
+  }
+
+  async function analyze(source){
+    if(busy) return;
+    busy = true;
+    var langSel = document.getElementById('globalLangSelect') || document.getElementById('demoLangSelect');
+    var lang = langSel ? langSel.value : 'en-US';
+
+    try {
+      say('Loading vision engine...');
+      var model = await getModel();
+      say('Analyzing photo content...');
+      var preds = await model.detect(source);
+      var objectSentence = describeObjects(preds);
+
+      var ocrText = '';
+      try {
+        say('Scanning for text inside image...');
+        await getOCR();
+        var code = OCR_LANG[lang.split('-')[0]];
+        var langs = code ? 'eng+' + code : 'eng';
+        var result = await Tesseract.recognize(source, langs);
+        ocrText = (result.data.text || '').replace(/\s+/g, ' ').trim();
+        if(ocrText.length < 4) ocrText = '';
+      } catch(e){ ocrText = ''; }
+
+      var spoken = await translate(objectSentence, lang);
+      if(ocrText){
+        spoken += ' ' + (await translate('Text in photo:', lang)) + ' ' + ocrText;
+      }
+      say(spoken);
+      speak(spoken, lang);
+    } catch(err){
+      say('Could not analyze photo: ' + err.message);
+    } finally {
+      busy = false;
+    }
+  }
+
+  if(document.getElementById('camOpenBtn')){
+    document.getElementById('camOpenBtn').addEventListener('click', async function(){
+      if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+        say('Camera requires https:// or localhost. Try Upload Photo.');
+        return;
+      }
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        video.srcObject = stream;
+        video.style.display = 'block';
+        await video.play();
+        say('Camera active. Click "Click & Answer".');
+      } catch(e){
+        say('Camera access was blocked. Use Upload Photo instead.');
+      }
+    });
+  }
+
+  if(document.getElementById('camSnapBtn')){
+    document.getElementById('camSnapBtn').addEventListener('click', function(){
+      if(!stream || !video.videoWidth){ say('Please open camera first.'); return; }
+      var canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      preview.src = canvas.toDataURL('image/jpeg', 0.92);
+      preview.style.display = 'block';
+      analyze(canvas);
+    });
+  }
+
+  if(document.getElementById('photoUploadBtn')){
+    document.getElementById('photoUploadBtn').addEventListener('click', function(){ if(fileInput) fileInput.click(); });
+  }
+
+  if(fileInput){
+    fileInput.addEventListener('change', function(){
+      var f = fileInput.files && fileInput.files[0];
+      if(!f) return;
+      preview.onload = function(){ analyze(preview); };
+      preview.src = URL.createObjectURL(f);
+      preview.style.display = 'block';
+      fileInput.value = '';
+    });
+  }
+
+  if(document.getElementById('photoStopBtn')){
+    document.getElementById('photoStopBtn').addEventListener('click', function(){
+      if(synth) synth.cancel();
+      if(stream){ stream.getTracks().forEach(function(t){ t.stop(); }); stream = null; }
+      if(video) video.style.display = 'none';
+      say('Photo reader stopped.');
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
